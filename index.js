@@ -54,6 +54,6 @@ async function sendDiscordWebhook(content) {
     }
 }
 
-const prompt = "quiero un mensaje personalizado ";
+const prompt = "quiero un mensaje personalizado sobre navidad";
 const comentario = "nodiscord"; 
 classify_text(`${prompt} ${comentario}`, comentario);
