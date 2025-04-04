@@ -3,24 +3,34 @@ const { API_KEY_GEMINI, DISCORD_WEBHOOK_URL } = require('./config');
 
 const genAI = new GoogleGenerativeAI(API_KEY_GEMINI);
 
-async function classify_text(msg) {
+async function classify_text(msg, comentario) {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-    const result = await model.generateContent(msg);
-    const response = await result.response;
-    const text = response.text();
-    console.log(text.length, text);
+    try {
+        const result = await model.generateContent(msg);
+        const response = await result.response;
+        const text = response.text();
+        console.log("Texto generado:", text);
 
-    if (text && text.length > 0) {
-        await sendDiscordWebhook(text);
-    } else {
-        console.log("No se generó texto.");
+     
+        if (comentario.toLowerCase() === "discord" && text && text.length > 0) {
+            const enviado = await sendDiscordWebhook(text);
+            if (enviado) {
+                console.log("Mensaje enviado a Discord correctamente.");
+            }
+        } else if (text && text.length > 0) {
+            console.log("El mensaje no se envió a Discord porque el comentario no era 'discord'.");
+        } else {
+            console.log("No se generó texto.");
+        }
+    } catch (error) {
+        console.error("Error al generar el texto:", error);
     }
 }
 
 async function sendDiscordWebhook(content) {
     try {
-        const fetchModule = await import('node-fetch'); 
-        const fetch = fetchModule.default; 
+        const fetchModule = await import('node-fetch');
+        const fetch = fetchModule.default;
 
         const response = await fetch(DISCORD_WEBHOOK_URL, {
             method: 'POST',
@@ -33,15 +43,17 @@ async function sendDiscordWebhook(content) {
         });
 
         if (response.ok) {
-            console.log("Mensaje enviado a Discord correctamente.");
+            return true; 
         } else {
             console.error("Error al enviar el mensaje a Discord:", response.status, response.statusText);
+            return false; 
         }
     } catch (error) {
         console.error("Error al enviar el mensaje a Discord:", error);
+        return false; 
     }
 }
 
-const prompt = "mandame una lista "
-const comentario = "carros";
-classify_text(`${prompt} ${comentario}`);
+const prompt = "quiero un mensaje personalizado ";
+const comentario = "nodiscord"; 
+classify_text(`${prompt} ${comentario}`, comentario);
